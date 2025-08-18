@@ -308,6 +308,13 @@
             <label>Frames (skipped/total)</label>
             <div class="val"><span id="vFrames" class="badge">—</span></div>
           </div>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px;">
+            <button id="btnStart" class="btn" style="font-size: 12px; padding: 8px;">Start</button>
+            <button id="btnStop" class="btn" style="font-size: 12px; padding: 8px;">Stop</button>
+            <button id="btnPause" class="btn" style="font-size: 12px; padding: 8px;">Pause</button>
+          </div>
+          
           <div class="small">
             Congestion und Skip‑Rate farblich markiert. Bytes in MB gerundet.
           </div>
@@ -357,6 +364,11 @@
       const vFrames = document.getElementById('vFrames')
       const upd = document.getElementById('upd')
       const outNameEl = document.getElementById('outName')
+
+      // Stream control buttons
+      const btnStart = document.getElementById('btnStart')
+      const btnStop = document.getElementById('btnStop')
+      const btnPause = document.getElementById('btnPause')
 
       let marker, chh, chv, refreshTimer, statusTimer
       let chosenOutputName = null
@@ -699,6 +711,84 @@
       zoomEl.addEventListener('input', updateZoomLabel)
       window.addEventListener('resize', () => {
         refreshPreview()
+      })
+
+      // --- Stream Control Events ---
+      btnStart.addEventListener('click', async () => {
+        const outputName = chosenOutputName || 'adv_stream'
+        try {
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: 'StartOutput',
+              requestData: { outputName }
+            })
+          })
+          if (!res.ok) throw new Error((await res.text()) || 'HTTP ' + res.status)
+          showToast(`Stream gestartet: ${outputName}`, 'ok')
+          // Refresh status immediately
+          setTimeout(fetchOutputStatusOnce, 500)
+        } catch (err) {
+          showToast('Fehler beim Stream-Start: ' + (err.message || err), 'err')
+          console.error(err)
+        }
+      })
+
+      btnStop.addEventListener('click', async () => {
+        const outputName = chosenOutputName || 'adv_stream'
+        try {
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: 'StopOutput',
+              requestData: { outputName }
+            })
+          })
+          if (!res.ok) throw new Error((await res.text()) || 'HTTP ' + res.status)
+          showToast(`Stream gestoppt: ${outputName}`, 'ok')
+          // Refresh status immediately
+          setTimeout(fetchOutputStatusOnce, 500)
+        } catch (err) {
+          showToast('Fehler beim Stream-Stop: ' + (err.message || err), 'err')
+          console.error(err)
+        }
+      })
+
+      btnPause.addEventListener('click', async () => {
+        const outputName = chosenOutputName || 'adv_stream'
+        try {
+          // First get current pause state
+          const statusRes = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: 'GetOutputStatus',
+              requestData: { outputName }
+            })
+          })
+          if (!statusRes.ok) throw new Error('Status check failed')
+          const statusData = await statusRes.json()
+          
+          // Toggle pause state
+          const currentlyPaused = statusData.outputPaused
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: currentlyPaused ? 'ResumeOutput' : 'PauseOutput',
+              requestData: { outputName }
+            })
+          })
+          if (!res.ok) throw new Error((await res.text()) || 'HTTP ' + res.status)
+          showToast(`Stream ${currentlyPaused ? 'fortgesetzt' : 'pausiert'}: ${outputName}`, 'ok')
+          // Refresh status immediately
+          setTimeout(fetchOutputStatusOnce, 500)
+        } catch (err) {
+          showToast('Fehler beim Stream-Pause: ' + (err.message || err), 'err')
+          console.error(err)
+        }
       })
 
       // init

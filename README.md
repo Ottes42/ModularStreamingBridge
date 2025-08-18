@@ -9,7 +9,46 @@ A Node.js REST API bridge that connects streaming platforms (Chaturbate) with OB
 - n8n instance (optional)
 - Chaturbate API credentials (optional)
 
-# TODO
+## Features
+
+### Events-Polling → n8n
+
+- Holt Events von `CB_EVENTS_URL` (Long-Polling, Timeout 120 s).
+- Sendet jedes Event unverändert als POST an `N8N_WEBHOOK_URL`.
+- Nutzt `nextUrl` aus der API-Antwort, um fortzusetzen.
+- Optional im n8n-Workflow nach `method` verzweigen (z. B. `tip` ⇒ Toy-Pattern, `chatMessage` ⇒ OBS-Overlay).
+
+**Beispiel-Antwort der Chaturbate Events API:**
+
+```json
+{
+  "events": [
+    {
+      "method": "mediaPurchase",
+      "object": {
+        "broadcaster": "example_broadcaster",
+        "user": {
+          "username": "example_user",
+          "inFanclub": false,
+          "gender": "m",
+          "hasTokens": true,
+          "recentTips": "none",
+          "isMod": false
+        },
+        "media": {
+          "id": 1,
+          "name": "photoset1",
+          "type": "photos",
+          "tokens": 25
+        }
+      },
+      "id": "UNIQUE_EVENT_ID"
+    }
+  ],
+  "nextUrl": "https://eventsapi.chaturbate.com/events/…/?i=UNIQUE_EVENT_ID&timeout=10"
+}
+
+## TODO
 
 ### Panel / Index
 
@@ -17,7 +56,6 @@ A Node.js REST API bridge that connects streaming platforms (Chaturbate) with OB
 - Preview zeigt immer vollbild (oder nach zoom wieder) und bei Dropdown die richtige Cam, für Zoom+Switch
 - Unzoom + Switch?
 - Ganzes Regiepanel bauen? Alle Cams die Zommbar sind zeigen evtl?
-- Stream/Recording Status Anzeige + Aktionen!
 
 ### n8n Automatisierungen
 
