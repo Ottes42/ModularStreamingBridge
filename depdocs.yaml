@@ -1,0 +1,11 @@
+target:
+  - url: "docs/"
+
+include: 
+  - "src"
+  - "www"
+  - "package.json"
+  - "env.example"
+  - "README.md"
+
+reinit: "a-random-string"
