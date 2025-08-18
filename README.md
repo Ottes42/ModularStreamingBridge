@@ -55,7 +55,6 @@ A Node.js REST API bridge that connects streaming platforms (Chaturbate) with OB
 - Access nur von zu Hause erlauben via nginx reverse proxy (aktuell htaccess, doku!)
 - Preview zeigt immer vollbild (oder nach zoom wieder) und bei Dropdown die richtige Cam, für Zoom+Switch
 - Unzoom + Switch?
-- Ganzes Regiepanel bauen? Alle Cams die Zommbar sind zeigen evtl?
 
 ### n8n Automatisierungen
 

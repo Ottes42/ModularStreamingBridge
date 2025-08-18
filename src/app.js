@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const config = require('./config');
+const obsService = require('./services/obsService');
 const obsController = require('./controllers/obsController');
 const chaturbateController = require('./controllers/chaturbateController');
 const { debugLog } = require('./utils/logger');
@@ -24,7 +25,6 @@ function createApp() {
   
   app.get('/health', (req, res) => {
     debugLog('HTTP IN: /health');
-    // const obsService = require('./services/obsService');
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
