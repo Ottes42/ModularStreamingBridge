@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OBS Zoom Panel</title>
+    <style>
+      :root {
+        --bg: #0b0f14;
+        --panel: #121821;
+        --muted: #8da3b8;
+        --fg: #e6eef7;
+        --accent: #7cc5ff;
+        --ok: #38d398;
+        --warn: #ffcd6b;
+        --err: #ff7a7a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 14px/1.35 system-ui, Segoe UI, Roboto, Helvetica, Arial,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 14px;
+      }
+      h1 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 10px;
+        color: var(--fg);
+      }
+      .grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 360px;
+        align-items: start;
+      }
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--panel);
+        border-radius: 14px;
+        padding: 12px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25),
+          inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        border-left: 4px solid transparent;
+      }
+
+      /* Status Panel */
+      .status-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      .status-title {
+        font-weight: 600;
+        font-size: 14px;
+      }
+      .status-upd {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .kv {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 6px 12px;
+        align-items: center;
+      }
+      .kv label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .val {
+        font-variant-numeric: tabular-nums;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        line-height: 18px;
+        vertical-align: middle;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .b-ok {
+        background: rgba(56, 211, 152, 0.12);
+        border-color: rgba(56, 211, 152, 0.35);
+        color: var(--fg);
+      }
+      .b-warn {
+        background: rgba(255, 205, 107, 0.12);
+        border-color: rgba(255, 205, 107, 0.35);
+        color: var(--fg);
+      }
+      .b-err {
+        background: rgba(255, 122, 122, 0.12);
+        border-color: rgba(255, 122, 122, 0.35);
+        color: var(--fg);
+      }
+
+      .clickbox {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        border-radius: 12px;
+        background: #0e1420;
+        outline: 1px solid rgba(255, 255, 255, 0.06);
+        overflow: hidden;
+        cursor: crosshair;
+      }
+      .preview {
+        position: absolute;
+        inset: 0;
+        object-fit: cover;
+        width: 100%;
+        height: 100%;
+      }
+      .overlay {
+        position: absolute;
+        inset: 0;
+      }
+      .overlay:after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+            transparent 49.75%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 50.25%
+          ),
+          linear-gradient(
+            90deg,
+            transparent 49.75%,
+            rgba(255, 255, 255, 0.08) 50%,
+            transparent 50.25%
+          );
+        background-size: 100% 20%, 20% 100%;
+        opacity: 0.25;
+      }
+      .marker {
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent);
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 0 3px rgba(124, 197, 255, 0.25);
+        border: 2px solid rgba(0, 0, 0, 0.45);
+      }
+      .crosshair-h,
+      .crosshair-v {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.25);
+        pointer-events: none;
+      }
+      .crosshair-h {
+        height: 1px;
+        left: 0;
+        right: 0;
+      }
+      .crosshair-v {
+        width: 1px;
+        top: 0;
+        bottom: 0;
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin: 0 0 6px;
+      }
+      input,
+      select,
+      button {
+        width: 100%;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: #0e1420;
+        color: var(--fg);
+        padding: 10px 12px;
+        outline: none;
+        transition: border 0.2s, box-shadow 0.2s;
+      }
+      input:focus,
+      select:focus,
+      button:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(124, 197, 255, 0.2);
+      }
+      input[type='range'] {
+        padding: 8px 0;
+      }
+      .btn {
+        cursor: pointer;
+      }
+      .btn.warn {
+        border-color: rgba(255, 205, 107, 0.35);
+      }
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        margin-left: 6px;
+        vertical-align: middle;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .errtxt {
+        color: var(--err);
+        font-size: 12px;
+        margin: 6px 0 0;
+        display: none;
+      }
+
+      .toast {
+        position: fixed;
+        right: 14px;
+        bottom: 14px;
+        background: #0e1420;
+        color: var(--fg);
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.2s, transform 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: none;
+      }
+      .ok {
+        border-left: 4px solid var(--ok);
+      }
+      .err {
+        border-left: 4px solid var(--err);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>OBS Zoom Panel <span class="pill">click to focus</span></h1>
+      <div class="grid">
+        <div class="card">
+          <div id="box" class="clickbox" title="Klick zum Fokussieren">
+            <img id="preview" class="preview" alt="Preview" />
+            <div id="overlay" class="overlay"></div>
+          </div>
+          <div id="err" class="errtxt">
+            OBS/Preview momentan nicht erreichbar.
+          </div>
+          <div class="small">
+            Klicke ins Quadrat. Wir senden normierte <code>x/y</code> (0..1) an
+            <code>/zoom</code>. Das Bild zeigt immer die OBS‑<b>Preview</b>
+            (alle 5 s). Hinweis: Klick-Zoom bezieht sich immer auf das
+            ungezoomte Bild. Bei aktivem Zoom kann der nächste Klick versetzt
+            wirken.
+          </div>
+        </div>
+
+        <div class="card" id="statusCard">
+          <div class="status-header">
+            <div class="status-title">
+              Output Status <span id="outName" class="pill">—</span>
+            </div>
+            <div class="status-upd" id="upd">—</div>
+          </div>
+          <div class="kv">
+            <label>Active</label>
+            <div class="val"><span id="vActive" class="badge">—</span></div>
+
+            <label>Reconnecting</label>
+            <div class="val"><span id="vReconn" class="badge">—</span></div>
+
+            <label>Dauer</label>
+            <div class="val" id="vDur">—</div>
+
+            <label>Datenstau</label>
+            <div class="val"><span id="vCong" class="badge">—</span></div>
+
+            <label>Bytes gesendet</label>
+            <div class="val" id="vBytes">—</div>
+
+            <label>Frames (skipped/total)</label>
+            <div class="val"><span id="vFrames" class="badge">—</span></div>
+          </div>
+          <div class="small">
+            Congestion und Skip‑Rate farblich markiert. Bytes in MB gerundet.
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Scene (Main-$cam-Zoom)</label>
+          <select id="scene"></select>
+
+          <label style="margin-top: 8px">
+            Zoom-Faktor <span id="zv" class="pill">2.0×</span>
+          </label>
+          <input id="zoom" type="range" min="1" max="3" step="0.1" value="2" />
+
+          <button id="btnReset" class="btn warn" style="margin-top: 12px">
+            Zurück / Unzoom (Crop zurücksetzen)
+          </button>
+
+          <div class="small">
+            Requests an <code>/obs</code>, <code>/obs/zoom</code> und
+            <code>/obs/preview</code> auf derselben Origin.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+      const box = document.getElementById('box')
+      const overlay = document.getElementById('overlay')
+      const preview = document.getElementById('preview')
+      const scene = document.getElementById('scene')
+      const zoomEl = document.getElementById('zoom')
+      const zoomVal = document.getElementById('zv')
+      const btnReset = document.getElementById('btnReset')
+      const errEl = document.getElementById('err')
+      const toast = document.getElementById('toast')
+
+      // Status elements
+      const statusCard = document.getElementById('statusCard')
+      const vActive = document.getElementById('vActive')
+      const vReconn = document.getElementById('vReconn')
+      const vDur = document.getElementById('vDur')
+      const vCong = document.getElementById('vCong')
+      const vBytes = document.getElementById('vBytes')
+      const vFrames = document.getElementById('vFrames')
+      const upd = document.getElementById('upd')
+      const outNameEl = document.getElementById('outName')
+
+      let marker, chh, chv, refreshTimer, statusTimer
+      let chosenOutputName = null
+
+      const originPath = p => window.location.origin.replace(/\/$/, '') + p
+
+      function showToast(msg, type = 'ok') {
+        toast.textContent = msg
+        toast.className = 'toast show ' + (type === 'ok' ? 'ok' : 'err')
+        setTimeout(() => toast.classList.remove('show'), 2200)
+      }
+      function ensureOverlays() {
+        if (!marker) {
+          marker = document.createElement('div')
+          marker.className = 'marker'
+          overlay.appendChild(marker)
+        }
+        if (!chh) {
+          chh = document.createElement('div')
+          chh.className = 'crosshair-h'
+          overlay.appendChild(chh)
+        }
+        if (!chv) {
+          chv = document.createElement('div')
+          chv.className = 'crosshair-v'
+          overlay.appendChild(chv)
+        }
+      }
+      function updateZoomLabel() {
+        zoomVal.textContent = (parseFloat(zoomEl.value) || 2).toFixed(1) + '×'
+      }
+
+      // "Main-$cam-Zoom" -> "Cam-$cam"
+      function camFromScene(sceneName) {
+        const m = /^Main-(.+)-Zoom$/i.exec(sceneName || '')
+        return m ? m[1] : null
+      }
+      function mainSceneForZoom(sceneName) {
+        return (sceneName || '').replace(/-Zoom$/i, '')
+      }
+      function sourceForScene(sceneName) {
+        const cam = camFromScene(sceneName)
+        return cam ? `Cam-${cam}` : null
+      }
+
+      // --- Preview (immer Preview-Szene) ---
+      function previewUrl() {
+        const ts = Date.now()
+        return originPath(`/obs/preview?w=1920&h=1080&ts=${ts}`)
+      }
+      function refreshPreview() {
+        preview.src = previewUrl()
+      }
+      function startPreviewLoop() {
+        if (refreshTimer) clearInterval(refreshTimer)
+        refreshPreview()
+        refreshTimer = setInterval(refreshPreview, 5000)
+      }
+
+      // --- Szenen laden ---
+      async function fetchScenes() {
+        const url = originPath('/obs')
+        const body = { requestType: 'GetSceneList', requestData: {} }
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+          if (!res.ok)
+            throw new Error((await res.text()) || 'HTTP ' + res.status)
+          const data = await res.json()
+          const names = (data?.scenes || [])
+            .map(s => s.sceneName)
+            .filter(n => /^Main-.+-Zoom$/i.test(n))
+          scene.innerHTML = ''
+          if (names.length === 0) {
+            const opt = document.createElement('option')
+            opt.textContent = '— keine Main-*-Zoom Szenen gefunden —'
+            opt.disabled = true
+            opt.selected = true
+            scene.appendChild(opt)
+            throw new Error('Keine passenden Szenen')
+          }
+          names.sort((a, b) => a.localeCompare(b))
+          for (const n of names) {
+            const opt = document.createElement('option')
+            opt.value = n
+            opt.textContent = n
+            scene.appendChild(opt)
+          }
+          errEl.style.display = 'none'
+        } catch (e) {
+          console.warn('GetSceneList failed:', e.message || e)
+          errEl.style.display = 'block'
+        }
+      }
+
+      // --- Output Auswahl & Status ---
+      async function pickOutputName() {
+        // Versuche aus GetOutputList einen passenden Output zu wählen
+        try {
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: 'GetOutputList',
+              requestData: {}
+            })
+          })
+          if (!res.ok) throw new Error('HTTP ' + res.status)
+          const data = await res.json()
+          const outs = Array.isArray(data?.outputs) ? data.outputs : []
+          // Heuristik: bevorzugt Namen, die "stream" enthalten; sonst ersten Output
+          const pref = outs.find(o => /stream/i.test(o.outputName)) || outs[0]
+          chosenOutputName = pref ? pref.outputName : 'adv_stream'
+        } catch (e) {
+          console.warn('GetOutputList failed, fallback to adv_stream', e)
+          chosenOutputName = 'adv_stream'
+        }
+        outNameEl.textContent = chosenOutputName || '—'
+      }
+
+      function fmtMs(ms) {
+        ms = Math.max(0, +ms || 0)
+        const s = Math.floor(ms / 1000)
+        const h = Math.floor(s / 3600)
+        const m = Math.floor((s % 3600) / 60)
+        const sec = s % 60
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(
+          2,
+          '0'
+        )}:${String(sec).padStart(2, '0')}`
+      }
+      function fmtMB(bytes) {
+        const mb = (+bytes || 0) / (1024 * 1024)
+        return mb.toFixed(mb < 10 ? 2 : 1) + ' MB'
+      }
+      function pct(n) {
+        return (n * 100).toFixed(n >= 0.1 ? 1 : 2) + '%'
+      } // generic percent formatter
+
+      function setBadge(el, text, level) {
+        el.className =
+          'badge ' +
+          (level === 'err' ? 'b-err' : level === 'warn' ? 'b-warn' : 'b-ok')
+        el.textContent = text
+      }
+      function setCardSeverity(level) {
+        statusCard.style.borderLeftColor =
+          level === 'err'
+            ? 'var(--err)'
+            : level === 'warn'
+            ? 'var(--warn)'
+            : 'var(--ok)'
+      }
+
+      function levelBoolTrueOk(v) {
+        return v ? 'ok' : 'warn'
+      } // not active -> warn
+      function levelBoolFalseOk(v) {
+        return v ? 'warn' : 'ok'
+      } // reconnecting true -> warn
+
+      function levelForCongestion(c) {
+        // OBS liefert häufig 0..1; wenn >1, behandeln als Prozent bereits skaliert
+        const val = c <= 1 ? c : c / 100
+        if (val >= 0.8) return 'err'
+        if (val >= 0.5) return 'warn'
+        return 'ok'
+      }
+      function levelForSkipRate(rate) {
+        // Rate erwartet 0..1; Schwellwerte konservativ
+        if (rate >= 0.02) return 'err' // ≥2%
+        if (rate >= 0.005) return 'warn' // ≥0.5%
+        return 'ok'
+      }
+
+      async function fetchOutputStatusOnce() {
+        const outputName = chosenOutputName || 'adv_stream'
+        const body = {
+          requestType: 'GetOutputStatus',
+          requestData: { outputName }
+        }
+        try {
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+          if (!res.ok)
+            throw new Error((await res.text()) || 'HTTP ' + res.status)
+          const d = await res.json()
+
+          const active = !!d.outputActive
+          const reconn = !!d.outputReconnecting
+          const dur = +d.outputDuration || 0
+          const cong = Number(d.outputCongestion ?? 0)
+          const bytes = Number(d.outputBytes ?? 0)
+          const skipped = Number(d.outputSkippedFrames ?? 0)
+          const total = Number(d.outputTotalFrames ?? 0)
+          const skipRate = total > 0 ? skipped / total : 0
+
+          // Values
+          setBadge(vActive, active ? 'Ja' : 'Nein', levelBoolTrueOk(active))
+          setBadge(vReconn, reconn ? 'Ja' : 'Nein', levelBoolFalseOk(!reconn)) // true = warn
+          vDur.textContent = fmtMs(dur)
+
+          const congPct = cong <= 1 ? cong * 100 : cong
+          setBadge(
+            vCong,
+            congPct.toFixed(congPct >= 0.1 ? 1 : 2) + '%',
+            levelForCongestion(cong)
+          )
+
+          vBytes.textContent = fmtMB(bytes)
+
+          const skipPctText =
+            (skipRate * 100).toFixed(skipRate >= 0.001 ? 2 : 3) + '%'
+          setBadge(
+            vFrames,
+            `${skipped} / ${total} · ${skipPctText}`,
+            levelForSkipRate(skipRate)
+          )
+
+          // Card severity = worst of congestion, skip, reconnecting
+          const levels = [
+            levelForCongestion(cong),
+            levelForSkipRate(skipRate),
+            reconn ? 'warn' : 'ok',
+            active ? 'ok' : 'warn'
+          ]
+          const worst = levels.includes('err')
+            ? 'err'
+            : levels.includes('warn')
+            ? 'warn'
+            : 'ok'
+          setCardSeverity(worst)
+
+          // Update time
+          const t = new Date()
+          upd.textContent = `${t.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })}`
+        } catch (e) {
+          console.warn('GetOutputStatus failed:', e)
+          setBadge(vActive, '—', 'warn')
+          setBadge(vReconn, '—', 'warn')
+          vDur.textContent = '—'
+          setBadge(vCong, '—', 'warn')
+          vBytes.textContent = '—'
+          setBadge(vFrames, '—', 'warn')
+          setCardSeverity('warn')
+          upd.textContent = '—'
+        }
+      }
+      function startStatusLoop() {
+        if (statusTimer) clearInterval(statusTimer)
+        fetchOutputStatusOnce()
+        statusTimer = setInterval(fetchOutputStatusOnce, 2000)
+      }
+
+      // --- Klick -> Zoom ---
+      box.addEventListener('click', async e => {
+        const rect = box.getBoundingClientRect()
+        const px = e.clientX - rect.left
+        const py = e.clientY - rect.top
+        const nx = +(px / rect.width).toFixed(4)
+        const ny = +(py / rect.height).toFixed(4)
+
+        ensureOverlays()
+        marker.style.left = nx * 100 + '%'
+        marker.style.top = ny * 100 + '%'
+        chh.style.top = ny * 100 + '%'
+        chv.style.left = nx * 100 + '%'
+
+        const sceneName = scene.value
+        const src = sourceForScene(sceneName)
+        const body = {
+          scene: sceneName,
+          source: src,
+          x: nx,
+          y: ny,
+          zoom: parseFloat(zoomEl.value) || 2
+        }
+
+        try {
+          const res = await fetch(originPath('/obs/zoom'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          })
+          if (!res.ok)
+            throw new Error((await res.text()) || 'HTTP ' + res.status)
+          showToast(
+            `Zoom → ${sceneName} @ ${(nx * 100).toFixed(1)}%, ${(
+              ny * 100
+            ).toFixed(1)}% · ${src}`,
+            'ok'
+          )
+          refreshPreview()
+        } catch (err) {
+          showToast('Fehler: ' + (err.message || err), 'err')
+          console.error(err)
+        }
+      })
+
+      // --- Unzoom / Crop zurücksetzen ---
+      btnReset.addEventListener('click', async () => {
+        const zoomScene = scene.value
+        if (!zoomScene) {
+          showToast('Keine Zoom-Szene gewählt.', 'err')
+          return
+        }
+        const mainScene = mainSceneForZoom(zoomScene)
+        try {
+          const res = await fetch(originPath('/obs'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              requestType: 'SetCurrentProgramScene',
+              requestData: { sceneName: mainScene }
+            })
+          })
+          if (!res.ok)
+            throw new Error((await res.text()) || 'HTTP ' + res.status)
+          showToast(`Zurück → ${mainScene}`, 'ok')
+          refreshPreview()
+        } catch (err) {
+          showToast(
+            'Fehler beim Zurückschalten: ' + (err.message || err),
+            'err'
+          )
+          console.error(err)
+        }
+      })
+
+      zoomEl.addEventListener('input', updateZoomLabel)
+      window.addEventListener('resize', () => {
+        refreshPreview()
+      })
+
+      // init
+      updateZoomLabel()
+      fetchScenes()
+      startPreviewLoop()
+      pickOutputName().then(startStatusLoop)
+    </script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+{
+  "name": "modularstreamingbridge",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ottes/ModularStreamingBridge.git"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon --ext js,json --exec node src/server.js"
+  },
+  "author": "Ottes <ottes@ottes-techno.de>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ottes/ModularStreamingBridge/issues"
+  },
+  "homepage": "https://github.com/ottes/ModularStreamingBridge#readme",
+  "dependencies": {
+    "axios": "^1.11.0",
+    "body-parser": "^2.2.0",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "obs-websocket-js": "^5.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
