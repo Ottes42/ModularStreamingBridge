@@ -52,20 +52,15 @@ A Node.js REST API bridge that connects streaming platforms (Chaturbate) with OB
 
 ### Panel / Index
 
-- Access nur von zu Hause erlauben via nginx reverse proxy (aktuell htaccess, doku!)
 - Preview zeigt immer vollbild (oder nach zoom wieder) und bei Dropdown die richtige Cam, für Zoom+Switch
 - Unzoom + Switch?
 
 ### n8n Automatisierungen
 
 - n8n könnte Licht im Raum anpassen (Spot, Wolkendecke, nur ein Hinweis)
-  - Streamstatus
-  - OBS Status
   - neue Follower
   - neue Tipps über x lassen blinken?
   - Farbe im Raum via Tipps ändern?
-  - bei lagg-erkennung (wie? restreamer oder event? bei schwarzem bild? offline/brb scene)
   - Glitch Filter bei special Events ein/aus?
-  - Sollten Mods Scenen wechseln können?
   - KI Auswerungen von Nachrichten oder Tipps oder PMs für Hinweise auf den Desktop? 
-    - Spam, Beleidigungen, aber auch positives?
+  - Jeden Streamchat danach auswerten lassen von KI
