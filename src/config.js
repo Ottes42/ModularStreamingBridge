@@ -17,7 +17,7 @@ const config = {
     chaturbate: {
       eventsUrl: process.env.CB_EVENTS_URL,
       statsUrl: process.env.CB_STATS_URL,
-      n8nWebhook: process.env.CB_N8N_EVENTS_WEHOOK
+      n8nWebhook: process.env.CB_N8N_EVENTS_WEBHOOK
     }
   }
 };
