@@ -17,7 +17,7 @@ services:
       # Chaturbate Configuration
       - CB_EVENTS_URL=${CB_EVENTS_URL}
       - CB_STATS_URL=${CB_STATS_URL}
-      - CB_N8N_EVENTS_WEHOOK=${CB_N8N_EVENTS_WEHOOK}
+      - CB_N8N_EVENTS_WEBHOOK=${CB_N8N_EVENTS_WEBHOOK}
     volumes:
       # Mount environment file if it exists
       - ./.env:/app/.env:ro
