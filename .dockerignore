@@ -1,14 +1,5 @@
-# Environment files
-.env
-.env.*
-!env.example
-
-# Dependencies
+# Node.js
 node_modules/
-
-# Logs
-logs
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -19,12 +10,26 @@ pids
 *.seed
 *.pid.lock
 
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
 
 # nyc test coverage
 .nyc_output
+
+# Dependency directories
+jspm_packages/
 
 # Optional npm cache directory
 .npm
@@ -37,6 +42,10 @@ coverage/
 
 # Yarn Integrity file
 .yarn-integrity
+
+# Git
+.git
+.gitignore
 
 # IDE and editors
 .vscode/
@@ -54,11 +63,13 @@ coverage/
 ehthumbs.db
 Thumbs.db
 
-# Build artifacts
-dist/
-build/
-*.tar.gz
+# Documentation files
+README.md
+CONTRIBUTING.md
+docs/
 
-# Temporary files
-tmp/
-temp/
+# Development files
+docker-compose.yml
+docker-compose.*.yml
+Dockerfile.dev
+.dockerignore

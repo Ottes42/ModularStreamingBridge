@@ -1,7 +1,17 @@
 {
   "name": "modularstreamingbridge",
   "version": "1.0.0",
-  "description": "",
+  "description": "A Node.js REST API bridge that connects streaming platforms (Chaturbate) with OBS Studio and n8n automation workflows. Handles event polling, webhook forwarding, and OBS WebSocket communication for streaming automation.",
+  "keywords": [
+    "streaming",
+    "obs",
+    "chaturbate",
+    "n8n",
+    "webhook",
+    "automation",
+    "bridge",
+    "websocket"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ottes/ModularStreamingBridge.git"

@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  modular-streaming-bridge:
+    build: .
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PORT=8080
+      - DEBUG_BRIDGE=${DEBUG_BRIDGE:-0}
+      # OBS WebSocket Configuration
+      - OBS_ADDR=${OBS_ADDR:-ws://host.docker.internal:4455}
+      - OBS_PASS=${OBS_PASS}
+      # n8n Configuration
+      - N8N_INSTANCE=${N8N_INSTANCE}
+      - N8N_APITOKEN=${N8N_APITOKEN}
+      # Chaturbate Configuration
+      - CB_EVENTS_URL=${CB_EVENTS_URL}
+      - CB_STATS_URL=${CB_STATS_URL}
+      - CB_N8N_EVENTS_WEHOOK=${CB_N8N_EVENTS_WEHOOK}
+    volumes:
+      # Mount environment file if it exists
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+    networks:
+      - streaming-bridge
+
+networks:
+  streaming-bridge:
+    driver: bridge
+
+# Optional: Add development override
+# Create docker-compose.override.yml for development-specific settings
